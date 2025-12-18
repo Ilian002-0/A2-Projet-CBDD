@@ -2,65 +2,47 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography.X509Certificates;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
-
 namespace A2_Projet_CBDD
 {
     internal class Connexion
     {
-        private string mail;
-        private string mdp;
-        private string Message;
-        public Connexion(string mail, string mdp)
+        // Identifiants définis dans votre fichier SQL (Fichier 3)
+        // Note: Dans un vrai projet, ne jamais stocker les mots de passe en clair ici.
+        private const string ConnectionStringPublic = "SERVER=localhost;PORT=3306;DATABASE=GymGestion;UID=AppPublic;PASSWORD=AppPublicPassword!3;";
+        private const string ConnectionStringAdmin = "SERVER=localhost;PORT=3306;DATABASE=GymGestion;UID=PrincipalAdmin;PASSWORD=PrincipalAdminPassword!1;";
+
+        public static MySqlConnection GetConnexionPublic()
         {
-            this.mail = mail;
-            this.mdp = mdp;
-        }
-        public bool SQL_connexion(string mail, string mdp)
-        {
-            MySqlConnection maConnexion = null;
             try
             {
-                string connexionString = "SERVER=localhost;PORT=3306;" +
-                                         "DATABASE=GymGestion;" +
-                                         $"UID={mail};PASSWORD={mdp}";
-
-                maConnexion = new MySqlConnection(connexionString);
-                maConnexion.Open();
-                Message = "Connexion établie !";
-                return true;
+                MySqlConnection conn = new MySqlConnection(ConnectionStringPublic);
+                conn.Open();
+                return conn;
             }
             catch (MySqlException e)
             {
-                switch (e.Number)
-                {
-                    case 0:
-                        Message = "Erreur de connexion au serveur";
-                        break;
-                    case 1045:
-                        Message = "Erreur uid/password";
-                        break;
-                    default:
-                        Message = " ErreurConnexion : " + e.ToString();
-                        break;
-                }
-                return false;
+                Console.WriteLine("Erreur de connexion (Public) : " + e.Message);
+                return null;
             }
         }
-        public string GetMessage
+
+        public static MySqlConnection GetConnexionAdmin()
         {
-            get { return Message; }
+            try
+            {
+                MySqlConnection conn = new MySqlConnection(ConnectionStringAdmin);
+                conn.Open();
+                return conn;
+            }
+            catch (MySqlException e)
+            {
+                Console.WriteLine("Erreur de connexion (Admin) : " + e.Message);
+                return null;
+            }
         }
-        public static MySqlConnection Get_Connexion(string mail, string mdp)
-        {
-            MySqlConnection maConnexion = null;
-            string connexionString = "SERVER=localhost;PORT=3306;" +
-                                     "DATABASE=GymGestion;" +
-                                     $"UID={mail};PASSWORD={mdp}";
-            maConnexion = new MySqlConnection(connexionString);
-            return maConnexion;
-        }
+
     }
 }

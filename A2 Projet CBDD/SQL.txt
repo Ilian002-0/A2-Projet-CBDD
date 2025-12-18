@@ -254,13 +254,15 @@ GRANT SELECT ON GymGestion.Cours TO 'AppPublic'@'localhost';
 
 GRANT SELECT ON GymGestion.Salle TO 'AppPublic'@'localhost';
 
-GRANT INSERT, UPDATE ON GymGestion.Membre TO 'AppPublic'@'localhost';
+GRANT SELECT ON GymGestion.Administrateur TO 'AppPublic'@'localhost';
+
+GRANT SELECT, INSERT, UPDATE ON GymGestion.Membre TO 'AppPublic'@'localhost';
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON GymGestion.Reservation TO 'AppPublic'@'localhost';
 
 
 
-FLUSH PRIVILEGES;
+-- FLUSH PRIVILEGES;
 
 
 

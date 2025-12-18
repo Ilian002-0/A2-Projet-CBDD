@@ -1,6 +1,8 @@
-﻿using System;
+﻿using MySql.Data.MySqlClient;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -8,39 +10,82 @@ namespace A2_Projet_CBDD
 {
     internal class Coach
     {
-        private int Id_Coach;
-        private string Nom;
-        private string Prenom;
-        private string Specialite;
-        private string Telephone;
+        public int IdCoach { get; set; }
+        public string Nom { get; set; }
+        public string Prenom { get; set; }
+        public string Specialite { get; set; }
+        public string Telephone { get; set; }
 
-        public Coach(string nom, string prenom, string specialite, string telephone)
+        public Coach(int id, string nom, string prenom, string spe, string tel)
         {
-            this.Nom = nom;
-            this.Prenom = prenom;
-            this.Specialite = specialite;
-            this.Telephone = telephone;
+            IdCoach = id; Nom = nom; Prenom = prenom; Specialite = spe; Telephone = tel;
         }
 
-        public string Get_Nom
+        // Constructeur pour création
+        public Coach(string nom, string prenom, string spe, string tel)
         {
-            get { return Nom; }
-            set { Nom = value; }
+            Nom = nom; Prenom = prenom; Specialite = spe; Telephone = tel;
         }
-        public string Get_Prenom
+
+        // Récupérer tous les coachs (Pour listes déroulantes ou affichage)
+        public static List<Coach> GetTousLesCoachs()
         {
-            get { return Prenom; }
-            set { Prenom = value; }
+            List<Coach> liste = new List<Coach>();
+            using (MySqlConnection conn = Connexion.GetConnexionPublic())
+            {
+                if (conn == null) return liste;
+                string query = "SELECT * FROM Coach";
+                MySqlCommand cmd = new MySqlCommand(query, conn);
+                using (MySqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        liste.Add(new Coach(
+                            reader.GetInt32("Id_Coach"),
+                            reader.GetString("Nom"),
+                            reader.GetString("Prenom"),
+                            reader.GetString("Specialite"),
+                            reader.GetString("Telephone")
+                        ));
+                    }
+                }
+            }
+            return liste;
         }
-        public string Get_Specialite
+
+        // Admin : Ajouter un coach
+        public bool Ajouter()
         {
-            get { return Specialite; }
-            set { Specialite = value; }
+            using (MySqlConnection conn = Connexion.GetConnexionAdmin())
+            {
+                try
+                {
+                    // Génération ID (Manuel car pas d'auto-increment)
+                    int newId = new Random().Next(10, 1000);
+                    // Note: Dans un vrai projet, vérifiez l'unicité comme pour Cours.cs
+
+                    string query = "INSERT INTO Coach VALUES (@id, @nom, @prenom, @spe, @tel)";
+                    MySqlCommand cmd = new MySqlCommand(query, conn);
+                    cmd.Parameters.AddWithValue("@id", newId);
+                    cmd.Parameters.AddWithValue("@nom", Nom);
+                    cmd.Parameters.AddWithValue("@prenom", Prenom);
+                    cmd.Parameters.AddWithValue("@spe", Specialite);
+                    cmd.Parameters.AddWithValue("@tel", Telephone);
+
+                    cmd.ExecuteNonQuery();
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Erreur ajout coach : " + ex.Message);
+                    return false;
+                }
+            }
         }
-        public string Get_Telephone
+
+        public override string ToString()
         {
-            get { return Telephone; }
-            set { Telephone = value; }
+            return $"{IdCoach} - {Nom} {Prenom} ({Specialite})";
         }
     }
 }

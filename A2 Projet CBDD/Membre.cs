@@ -1,116 +1,226 @@
-﻿using System;
+﻿using MySql.Data.MySqlClient;
+using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
-using MySql.Data.MySqlClient;
 
 namespace A2_Projet_CBDD
 {
     internal class Membre
     {
-        private int idMembre;
-        private string nom;
-        private string prenom;
-        private string adresse;
-        private string tel;
-        private string mail;
-        private DateTime Date_Inscription;
-        private string MotDePasse;
-        private List<int> ID_existant= new List<int>();
-        private MySqlConnection maConnexion = null;
+        public int IdMembre { get; set; }
+        public string Nom { get; set; }
+        public string Prenom { get; set; }
+        public string Adresse { get; set; }
+        public string Tel { get; set; }
+        public string Mail { get; set; }
+        public DateTime DateInscription { get; set; }
+        public string Statut { get; set; } // 'EnAttente' ou 'Valide'
 
-        public Membre(int ID, MySqlConnection maConnexion)
+        public Membre() { }
+
+        // Constructeur pour créer un membre depuis l'interface
+        public Membre(int id, string nom, string prenom, string adresse, string tel, string mail)
         {
-            string requete = "SELECT * FROM Membre WHERE idMembre=@ID;";
-            MySqlCommand command2 = maConnexion.CreateCommand();
-            command2.CommandText = requete;
-            command2.Parameters.AddWithValue("@ID", ID);
-            MySqlDataReader reader = command2.ExecuteReader();
-            while (reader.Read())
-            {
-                this.idMembre = reader.GetInt32("idMembre");
-                this.nom = reader.GetString("Nom");
-                this.prenom = reader.GetString("Prenom");
-                this.adresse = reader.GetString("Adresse");
-                this.tel = reader.GetString("Tel");
-                this.mail = reader.GetString("Mail");
-                this.Date_Inscription = reader.GetDateTime("Date_Inscription");
-                this.MotDePasse = reader.GetString("MotDePasse");
-            }
-            reader.Close();
-            command2.Dispose();
-        }
-        public Membre(string nom, string prenom, string adresse, string tel, string mail, string motDePasse, MySqlConnection maConnexion)
-        {
-            DateTime date_now = DateTime.Now;
-            this.nom = nom;
-            this.prenom = prenom;
-            this.adresse = adresse;
-            this.tel = tel;
-            this.mail = mail;
-            Date_Inscription = date_now;
-            MotDePasse = motDePasse;
-            ID_existant = Get_ID_existant();
-            this.maConnexion = maConnexion;
+            this.IdMembre = id;
+            this.Nom = nom;
+            this.Prenom = prenom;
+            this.Adresse = adresse;
+            this.Tel = tel;
+            this.Mail = mail;
+            this.Statut = "EnAttente";
+            this.DateInscription = DateTime.Now;
         }
 
-        public int IdMembre { get => idMembre; set => idMembre = value; }
-        public string Nom { get => nom; set => nom = value; }
-        public string Prenom { get => prenom; set => prenom = value; }
-        public string Adresse { get => adresse; set => adresse = value; }
-        public string Tel { get => tel; set => tel = value; }
-        public string Mail { get => mail; set => mail = value; }
-        public DateTime DateInscription { get => Date_Inscription; set => Date_Inscription = value; }
-        public string Get_MotDePasse { get => MotDePasse; set => MotDePasse = value; }
-
-        private List<int> Get_ID_existant()
+        // Méthode statique pour se connecter (Login)
+        public static Membre SeConnecter(string mail, string motDePasse)
         {
-            string requete = "SELECT idMembre FROM Membre;";
-            MySqlCommand command2 = maConnexion.CreateCommand();
-            command2.CommandText = requete;
-
-            List<int> res = new List<int>();
-            MySqlDataReader reader = command2.ExecuteReader();
-
-            while (reader.Read())
+            using (MySqlConnection conn = Connexion.GetConnexionPublic())
             {
-                for (int i = 0; i < reader.FieldCount; i++)
+                if (conn == null) return null;
+
+                string query = "SELECT * FROM Membre WHERE mail = @mail AND MotDePasse = @mdp";
+                MySqlCommand cmd = new MySqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@mail", mail);
+                cmd.Parameters.AddWithValue("@mdp", motDePasse);
+
+                using (MySqlDataReader reader = cmd.ExecuteReader())
                 {
-                    res.Add(reader.GetInt32(i));
+                    if (reader.Read())
+                    {
+                        return new Membre
+                        {
+                            IdMembre = reader.GetInt32("idMembre"),
+                            Nom = reader.GetString("nom"),
+                            Prenom = reader.GetString("prenom"),
+                            Adresse = reader.GetString("adresse"),
+                            Tel = reader.GetString("tel"),
+                            Mail = reader.GetString("mail"),
+                            DateInscription = reader.GetDateTime("Date_Inscription"),
+                            Statut = reader.GetString("Statut")
+                        };
+                    }
                 }
             }
-            reader.Close();
-            command2.Dispose();
-            return res;
+            return null; // Échec connexion
         }
-        public int Generer_ID()
+
+        // Méthode pour s'inscrire dans la BDD
+        public bool Inscrire(string motDePasse)
+        {
+            using (MySqlConnection conn = Connexion.GetConnexionPublic())
+            {
+                if (conn == null) return false;
+
+                try
+                {
+                    // Note: IdMembre n'est pas AUTO_INCREMENT dans votre SQL, il faut le gérer.
+                    // Ici on utilise une méthode simple ou aléatoire pour l'exemple, mais l'idéal est de changer le SQL en AUTO_INCREMENT.
+
+                    string query = "INSERT INTO Membre (idMembre, nom, prenom, adresse, tel, mail, Date_Inscription, MotDePasse, Statut) " +
+                                   "VALUES (@id, @nom, @prenom, @adr, @tel, @mail, @date, @mdp, 'EnAttente')";
+
+                    MySqlCommand cmd = new MySqlCommand(query, conn);
+                    cmd.Parameters.AddWithValue("@id", this.IdMembre);
+                    cmd.Parameters.AddWithValue("@nom", this.Nom);
+                    cmd.Parameters.AddWithValue("@prenom", this.Prenom);
+                    cmd.Parameters.AddWithValue("@adr", this.Adresse);
+                    cmd.Parameters.AddWithValue("@tel", this.Tel);
+                    cmd.Parameters.AddWithValue("@mail", this.Mail);
+                    cmd.Parameters.AddWithValue("@date", DateTime.Now);
+                    cmd.Parameters.AddWithValue("@mdp", motDePasse);
+
+                    cmd.ExecuteNonQuery();
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Erreur inscription : " + ex.Message);
+                    return false;
+                }
+            }
+        }
+
+        public bool ReserverCours(int idCours)
+        {
+            if (this.Statut != "Valide")
+            {
+                Console.WriteLine("Votre compte doit être validé par un administrateur pour réserver.");
+                return false;
+            }
+            using (MySqlConnection conn = Connexion.GetConnexionPublic())
+            {
+                if (conn == null) return false;
+                try
+                {
+                    // Générer un ID Reservation aléatoire (car pas auto_increment)
+                    int idResa = new Random().Next(1000, 99999);
+
+                    string query = "INSERT INTO Reservation (Id_Reservation, idMembre, Id_Cours, Date_Reservation, Statut_Reservation) " +
+                                   "VALUES (@idResa, @idMembre, @idCours, @date, 'Confirme')";
+
+                    MySqlCommand cmd = new MySqlCommand(query, conn);
+                    cmd.Parameters.AddWithValue("@idResa", idResa);
+                    cmd.Parameters.AddWithValue("@idMembre", this.IdMembre);
+                    cmd.Parameters.AddWithValue("@idCours", idCours);
+                    cmd.Parameters.AddWithValue("@date", DateTime.Now);
+
+                    cmd.ExecuteNonQuery();
+                    Console.WriteLine("Réservation confirmée !");
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Erreur réservation : " + ex.Message);
+                    return false;
+                }
+            }
+        }
+        public static int GenererIdUnique()
         {
             Random rnd = new Random();
-            int new_ID = rnd.Next(1, 1000);
-            while (ID_existant.Contains(new_ID))
+            int nouvelId = 0;
+            bool estUnique = false;
+
+            using (MySqlConnection conn = Connexion.GetConnexionPublic())
             {
-                new_ID = rnd.Next(1, 1000);
+                if (conn == null) return -1; // Gestion d'erreur
+
+                while (!estUnique)
+                {
+                    nouvelId = rnd.Next(1, 10000); // Génère un ID entre 1 et 10000
+
+                    string query = "SELECT COUNT(*) FROM Membre WHERE idMembre = @id";
+                    MySqlCommand cmd = new MySqlCommand(query, conn);
+                    cmd.Parameters.AddWithValue("@id", nouvelId);
+
+                    // Si le résultat est 0, l'ID est libre
+                    int count = Convert.ToInt32(cmd.ExecuteScalar());
+                    if (count == 0)
+                    {
+                        estUnique = true;
+                    }
+                }
             }
-            ID_existant.Add(new_ID);
-            return new_ID;
+            return nouvelId;
         }
-        public static int Get_ID(string mail, MySqlConnection maConnexion)
+        public static List<Membre> GetMembresEnAttente()
         {
-            string requete = "SELECT idMembre FROM Membre WHERE Mail=@Mail;";
-            MySqlCommand command2 = maConnexion.CreateCommand();
-            command2.CommandText = requete;
-            command2.Parameters.AddWithValue("@Mail", mail);
-            MySqlDataReader reader = command2.ExecuteReader();
-            int res = -1;
-            if (reader.Read())
+            List<Membre> liste = new List<Membre>();
+            using (MySqlConnection conn = Connexion.GetConnexionPublic())
             {
-                res = reader.GetInt32("idMembre");
+                if (conn == null) return liste;
+
+                string query = "SELECT * FROM Membre WHERE Statut = 'EnAttente'";
+                MySqlCommand cmd = new MySqlCommand(query, conn);
+
+                using (MySqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        liste.Add(new Membre
+                        {
+                            IdMembre = reader.GetInt32("idMembre"),
+                            Nom = reader.GetString("nom"),
+                            Prenom = reader.GetString("prenom"),
+                            Mail = reader.GetString("mail"),
+                            DateInscription = reader.GetDateTime("Date_Inscription"),
+                            Statut = reader.GetString("Statut")
+                        });
+                    }
+                }
             }
-            reader.Close();
-            command2.Dispose();
-            return res;
+            return liste;
+        }
+        public static List<Membre> GetTousLesMembres()
+        {
+            List<Membre> liste = new List<Membre>();
+            using (MySqlConnection conn = Connexion.GetConnexionPublic())
+            {
+                if (conn == null) return liste;
+                string query = "SELECT * FROM Membre ORDER BY Nom";
+                MySqlCommand cmd = new MySqlCommand(query, conn);
+
+                using (MySqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        liste.Add(new Membre
+                        {
+                            IdMembre = reader.GetInt32("idMembre"),
+                            Nom = reader.GetString("nom"),
+                            Prenom = reader.GetString("prenom"),
+                            Mail = reader.GetString("mail"),
+                            Tel = reader.GetString("tel"),
+                            DateInscription = reader.GetDateTime("Date_Inscription"),
+                            Statut = reader.GetString("Statut")
+                        });
+                    }
+                }
+            }
+            return liste;
         }
     }
 }
