@@ -23,16 +23,24 @@ namespace A2_Projet_CBDD
 
         public Membre(int ID, MySqlConnection maConnexion)
         {
-            this.idMembre = ID;
-            this.nom = nom;
-            this.prenom = prenom;
-            this.adresse = adresse;
-            this.tel = tel;
-            this.mail = mail;
-            Date_Inscription = date;
-            MotDePasse = motDePasse;
-            ID_existant = Get_ID_existant();
-            this.maConnexion = maConnexion;
+            string requete = "SELECT * FROM Membre WHERE idMembre=@ID;";
+            MySqlCommand command2 = maConnexion.CreateCommand();
+            command2.CommandText = requete;
+            command2.Parameters.AddWithValue("@ID", ID);
+            MySqlDataReader reader = command2.ExecuteReader();
+            while (reader.Read())
+            {
+                this.idMembre = reader.GetInt32("idMembre");
+                this.nom = reader.GetString("Nom");
+                this.prenom = reader.GetString("Prenom");
+                this.adresse = reader.GetString("Adresse");
+                this.tel = reader.GetString("Tel");
+                this.mail = reader.GetString("Mail");
+                this.Date_Inscription = reader.GetDateTime("Date_Inscription");
+                this.MotDePasse = reader.GetString("MotDePasse");
+            }
+            reader.Close();
+            command2.Dispose();
         }
         public Membre(string nom, string prenom, string adresse, string tel, string mail, string motDePasse, MySqlConnection maConnexion)
         {
@@ -88,38 +96,21 @@ namespace A2_Projet_CBDD
             ID_existant.Add(new_ID);
             return new_ID;
         }
-        public string Get_Nom(int ID, MySqlConnection maConnexion)
+        public static int Get_ID(string mail, MySqlConnection maConnexion)
         {
-            string requete = "SELECT Nom FROM Membre WHERE idMembre=@ID;";
+            string requete = "SELECT idMembre FROM Membre WHERE Mail=@Mail;";
             MySqlCommand command2 = maConnexion.CreateCommand();
             command2.CommandText = requete;
-            command2.Parameters.AddWithValue("@ID", ID);
-            string res = "";
+            command2.Parameters.AddWithValue("@Mail", mail);
             MySqlDataReader reader = command2.ExecuteReader();
-            while (reader.Read())
+            int res = -1;
+            if (reader.Read())
             {
-                res = reader.GetString(0);
+                res = reader.GetInt32("idMembre");
             }
             reader.Close();
             command2.Dispose();
             return res;
         }
-        public string Get_Prenom(int ID, MySqlConnection maConnexion)
-        {
-            string requete = "SELECT Prenom FROM Membre WHERE idMembre=@ID;";
-            MySqlCommand command2 = maConnexion.CreateCommand();
-            command2.CommandText = requete;
-            command2.Parameters.AddWithValue("@ID", ID);
-            string res = "";
-            MySqlDataReader reader = command2.ExecuteReader();
-            while (reader.Read())
-            {
-                res = reader.GetString(0);
-            }
-            reader.Close();
-            command2.Dispose();
-            return res;
-        }
-        
     }
 }

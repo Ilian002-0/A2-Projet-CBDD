@@ -1,0 +1,353 @@
+﻿-- =============================================
+
+-- FICHIER 1 : CRÉATION DE LA STRUCTURE
+
+-- =============================================
+
+DROP DATABASE IF EXISTS GymGestion;
+
+CREATE DATABASE GymGestion;
+
+USE GymGestion;
+
+
+
+CREATE TABLE Membre(
+
+    idMembre int PRIMARY KEY,
+
+    nom varchar(50) NOT NULL, 
+
+    prenom varchar(50), 
+
+    adresse varchar(30), 
+
+    tel varchar(10) not null,
+
+    mail varchar(100),
+
+    Date_Inscription DATETIME,
+
+    MotDePasse varchar(20) NOT NULL,
+
+    Statut varchar(20) DEFAULT 'EnAttente'
+
+);
+
+
+
+CREATE TABLE Salle (
+
+    Id_Salle INT PRIMARY KEY,
+
+    Nom_Salle varchar(50) NOT NULL,
+
+    Capacite INT NOT NULL
+
+);
+
+
+
+CREATE TABLE Coach (
+
+    Id_Coach INT PRIMARY KEY,
+
+    Nom varchar(50) NOT NULL,
+
+    Prenom varchar(50) NOT NULL,
+
+    Specialite varchar(100),
+
+    Telephone varchar(15)
+
+);
+
+
+
+CREATE TABLE Administrateur (
+
+    Id_Admin INT PRIMARY KEY,
+
+    Identifiant varchar(50) NOT NULL UNIQUE,
+
+    MotDePasse varchar(100) NOT NULL,
+
+    Role_Admin varchar(20) NOT NULL
+
+);
+
+
+
+CREATE TABLE Cours (
+
+    Id_Cours INT PRIMARY KEY,
+
+    Nom_Cours varchar(100) NOT NULL,
+
+    Description varchar(255),
+
+    Date_Heure DATETIME NOT NULL,
+
+    Duree_Minutes INT NOT NULL,
+
+    Niveau_Difficulte varchar(20),
+
+    Capacite_Max INT NOT NULL,
+
+    Id_Coach INT NOT NULL,
+
+    Id_Salle INT NOT NULL,
+
+    FOREIGN KEY (Id_Coach) REFERENCES Coach(Id_Coach),
+
+    FOREIGN KEY (Id_Salle) REFERENCES Salle(Id_Salle)
+
+);
+
+
+
+CREATE TABLE Reservation (
+
+    Id_Reservation INT PRIMARY KEY,
+
+    idMembre INT NOT NULL,
+
+    Id_Cours INT NOT NULL,
+
+    Date_Reservation DATETIME,
+
+    Statut_Reservation varchar(20) DEFAULT 'Confirme',
+
+    FOREIGN KEY (idMembre) REFERENCES Membre(idMembre),
+
+    FOREIGN KEY (Id_Cours) REFERENCES Cours(Id_Cours)
+
+);
+
+
+
+
+
+-- =============================================
+
+-- FICHIER 2 : PEUPLEMENT (INSERTION DONNÉES)
+
+-- =============================================
+
+USE GymGestion;
+
+
+
+INSERT INTO Salle (Id_Salle, Nom_Salle, Capacite) VALUES 
+
+(101, 'Salle Musculation', 50),
+
+(102, 'Studio Yoga', 20),
+
+(103, 'Salle Cardio', 30);
+
+
+
+INSERT INTO Coach (Id_Coach, Nom, Prenom, Specialite, Telephone) VALUES 
+
+(1, 'Serene', 'Thomas', 'Musculation', '0601020304'),
+
+(2, 'Martin', 'Sophie', 'Yoga & Pilates', '0611223344'),
+
+(3, 'Roux', 'Lucas', 'Crossfit', '0699887766');
+
+
+
+INSERT INTO Administrateur (Id_Admin, Identifiant, MotDePasse, Role_Admin) VALUES 
+
+(501, 'admin_main', '1234', 'Principal'),
+
+(502, 'admin_assistant', '1234', 'Secondaire');
+
+
+
+INSERT INTO Membre (idMembre, nom, prenom, adresse, tel, mail, Date_Inscription, MotDePasse, Statut) VALUES 
+
+(1, 'Penicaud', 'Augustin', '10 rue de Paris', '0700000001', 'thomas.lefevre@email.com', '2025-11-01 10:00:00', 'pass1', 'Valide'),
+
+(2, 'Dubois', 'Marie', '25 avenue de Lyon', '0700000002', 'marie.dubois@email.com', '2025-11-15 14:30:00', 'pass2', 'Valide'),
+
+(3, 'Moreau', 'Claire', '5 rue du stade', '0700000003', 'claire.moreau@email.com', '2025-12-01 09:00:00', 'pass3', 'EnAttente');
+
+
+
+INSERT INTO Cours (Id_Cours, Nom_Cours, Description, Date_Heure, Duree_Minutes, Niveau_Difficulte, Capacite_Max, Id_Coach, Id_Salle) VALUES 
+
+(10, 'Yoga Matinal', 'Réveil musculaire en douceur', '2025-12-21 09:00:00', 60, 'Débutant', 15, 2, 102),
+
+(11, 'Crossfit Intensif', 'Entraînement haute intensité', '2025-12-21 18:00:00', 45, 'Avancé', 20, 3, 101),
+
+(12, 'Pilates', 'Renforcement des muscles profonds', '2025-12-22 10:00:00', 60, 'Intermédiaire', 15, 2, 102);
+
+
+
+INSERT INTO Reservation (Id_Reservation, idMembre, Id_Cours, Date_Reservation, Statut_Reservation) VALUES 
+
+(100, 1, 10, '2025-12-18 11:30:00', 'Confirme'),
+
+(101, 2, 11, '2025-12-18 15:00:00', 'Confirme'),
+
+(102, 1, 12, '2025-12-18 16:00:00', 'Annule');
+
+
+
+-- =============================================
+
+-- FICHIER 3 : SÉCURITÉ ET UTILISATEURS
+
+-- =============================================
+
+USE GymGestion;
+
+
+
+DROP USER IF EXISTS 'PrincipalAdmin'@'localhost';  
+
+DROP USER IF EXISTS 'SecondaryAdmin'@'localhost';
+
+DROP USER IF EXISTS 'AppPublic'@'localhost';
+
+
+
+CREATE USER 'PrincipalAdmin'@'localhost' IDENTIFIED BY 'PrincipalAdminPassword!1';
+
+CREATE USER 'SecondaryAdmin'@'localhost' IDENTIFIED BY 'SecondaryAdminPassword!2';
+
+CREATE USER 'AppPublic'@'localhost' IDENTIFIED BY 'AppPublicPassword!3';
+
+
+
+-- Profil 1 : Admin Principal
+
+GRANT ALL PRIVILEGES ON GymGestion.* TO 'PrincipalAdmin'@'localhost';
+
+GRANT GRANT OPTION ON GymGestion.* TO 'PrincipalAdmin'@'localhost';
+
+
+
+-- Profil 2 : Admin Secondaire
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON GymGestion.Coach TO 'SecondaryAdmin'@'localhost';
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON GymGestion.Salle TO 'SecondaryAdmin'@'localhost';
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON GymGestion.Cours TO 'SecondaryAdmin'@'localhost';
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON GymGestion.Membre TO 'SecondaryAdmin'@'localhost';
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON GymGestion.Reservation TO 'SecondaryAdmin'@'localhost';
+
+GRANT SELECT ON GymGestion.Administrateur TO 'SecondaryAdmin'@'localhost';
+
+
+
+-- Profil 3 : App Public
+
+GRANT SELECT ON GymGestion.Coach TO 'AppPublic'@'localhost';
+
+GRANT SELECT ON GymGestion.Cours TO 'AppPublic'@'localhost';
+
+GRANT SELECT ON GymGestion.Salle TO 'AppPublic'@'localhost';
+
+GRANT INSERT, UPDATE ON GymGestion.Membre TO 'AppPublic'@'localhost';
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON GymGestion.Reservation TO 'AppPublic'@'localhost';
+
+
+
+FLUSH PRIVILEGES;
+
+
+
+-- =============================================
+
+-- FICHIER 4 : CONTRAINTES TECHNIQUES SUPPLÉMENTAIRES
+
+-- =============================================
+
+USE GymGestion;
+
+
+
+-- Contrainte 1 : La capacité d'une salle doit être supérieure à 0
+
+ALTER TABLE Salle
+
+ADD CONSTRAINT ck_capacite_positive CHECK (Capacite > 0);
+
+
+
+-- Contrainte 2 : La durée d'un cours doit être positive
+
+ALTER TABLE Cours
+
+ADD CONSTRAINT ck_duree_positive CHECK (Duree_Minutes > 0);
+
+
+
+-- =============================================
+
+-- FICHIER 5 : RÉCAPITULATIF DES REQUÊTES
+
+-- Ce fichier contient l'ensemble des requêtes demandées dans le cahier des charges.
+
+-- =============================================
+
+USE GymGestion;
+
+
+
+-- ---------------------------------------------------------
+
+-- A. DEUX REQUÊTES AVEC SOUS-REQUÊTES (Source 31)
+
+-- ---------------------------------------------------------
+
+
+
+-- 1. Trouver les membres intéressés par le Yoga
+
+SELECT Nom, Prenom FROM Membre
+
+WHERE idMembre IN (
+
+    SELECT idMembre FROM Reservation 
+
+    WHERE Id_Cours IN (SELECT Id_Cours FROM Cours WHERE Nom_Cours LIKE '%Yoga%')
+
+);
+
+
+
+-- 2. Trouver les cours plus longs que la moyenne
+
+SELECT Nom_Cours, Duree_Minutes 
+
+FROM Cours 
+
+WHERE Duree_Minutes > (SELECT AVG(Duree_Minutes) FROM Cours);
+
+
+
+
+
+-- ---------------------------------------------------------
+
+-- B. UNE REQUÊTE ENSEMBLISTE (UNION) (Source 32)
+
+-- ---------------------------------------------------------
+
+
+
+-- Liste complète des noms de personnes (Membres + Coachs)
+
+SELECT Nom FROM Membre
+
+UNION
+
+SELECT Nom FROM Coach;

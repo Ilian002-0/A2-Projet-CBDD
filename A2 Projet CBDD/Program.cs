@@ -36,10 +36,12 @@ namespace A2_Projet_CBDD
                         mail = Console.ReadLine();
                         Console.WriteLine("Mot de passe :\n");
                         mdp = Console.ReadLine();
+                        conn.SQL_connexion(mail, mdp);
                         Console.WriteLine(conn.GetMessage);
                         System.Threading.Thread.Sleep(2000);
                     }
-                    Membre user = new Membre(1, "Nom", "Prenom", "Adresse", "Tel", mail, mdp);
+                    MySqlConnection maConnexion = Connexion.Get_Connexion(mail, mdp);
+                    user = new Membre(Membre.Get_ID(mail, maConnexion), maConnexion);
                     Console.Clear();
                     break;
                 case 2:
@@ -59,6 +61,7 @@ namespace A2_Projet_CBDD
         }
         static void Main(string[] args)
         {
+            DisplayMenu();
         }
     }
 }

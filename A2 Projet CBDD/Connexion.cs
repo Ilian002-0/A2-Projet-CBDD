@@ -53,5 +53,14 @@ namespace A2_Projet_CBDD
         {
             get { return Message; }
         }
+        public static MySqlConnection Get_Connexion(string mail, string mdp)
+        {
+            MySqlConnection maConnexion = null;
+            string connexionString = "SERVER=localhost;PORT=3306;" +
+                                     "DATABASE=GymGestion;" +
+                                     $"UID={mail};PASSWORD={mdp}";
+            maConnexion = new MySqlConnection(connexionString);
+            return maConnexion;
+        }
     }
 }

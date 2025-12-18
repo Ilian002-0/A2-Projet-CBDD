@@ -1,0 +1,56 @@
+﻿Projet : Système de gestion pour une salle de sport 
+Description : Ce projet vise à créer une base de données pour gérer les opérations quotidiennes 
+d'une salle de sport. La base de données devrait permettre aux employés de suivre les membres, les 
+adhésions, les coachs, les cours et les salles. Le projet est à faire en trinôme. 
+Vous vous lancez dans l’entreprenariat et vous souhaitez ouvrir une salle de sport dans votre 
+commune. Pour assurer une bonne gestion vous allez préparer une application qui assure les 
+fonctionnalités suivantes : 
+Une interface gérant (à deux niveaux, administrateur principal et administrateur secondaire) qui 
+permet : - - - 
+Gestion des membres et des demandes d’adhésion : Ajouter un membre, valider une 
+inscription, supprimer une adhésion, afficher les informations d’un membre, modifier les 
+informations, etc. 
+Gestion des coachs : Enregistrer les informations sur les coachs : le nom, prénom, spécialité, 
+numéro de contact, etc. 
+Gestion des cours : Enregistrer les détails des cours proposés par la salle de sport : le nom du 
+cours, l'horaire, le coach attribué, la capacité maximale des participants, etc. 
+Une interface membre qui permet : - - - 
+L’inscription : remplir un formulaire d’inscription à valider par un des administrateurs. 
+(Sauvegarder les informations des membres : le nom, prénom, adresse, numéro de 
+téléphone, adresse e-mail, date d'inscription, etc.) 
+La réservation : permettre aux membres (inscription validée) de réserver des cours dans la 
+liste des cours proposés. 
+L’accès à l’historique des inscriptions et leurs gestions.  
+Une interface évaluation qui génère des rapports statistiques sur les informations des membres, la 
+participation aux cours collectifs, les coachs les plus suivis, etc. 
+N’oubliez pas : - - - - - 
+Les membres et les administrateurs se connectent de manière sécurisée à leurs espaces. 
+De penser à une bonne gestion des inscriptions aux cours : je ne peux pas m’inscrire à un 
+cours dont la capacité est atteinte. 
+De permettre l’annulation d’une réservation par le membre, l’ajout de nouveaux cours, 
+modifications d’un cours, annulation d’un cours par un administrateur. 
+Les deux administrateurs n’ont pas les mêmes privilèges en termes d’utilisation de la BDD. 
+D’inclure des informations textuelles qui rendent votre application plus simple à utiliser : 
+informations des cours (nom, description, durée, intensité, niveau de difficulté, etc), sur les 
+coachs (nom, formations, spécialités etc), les formats de saisies attendues. 
+Contraintes techniques : 
+Vous devez : 
+ Créer différents utilisateurs à la base de données avec différents privilèges. 
+ Utiliser au moins deux contraintes sur vos attributs (à part la contrainte de clé primaire, clé 
+étrangère et NOT NULL) 
+ Avoir dans vos requêtes au moins : - 
+Deux requêtes avec sous requêtes - - - - 
+Une requête ensembliste 
+Deux requêtes avec jointures (sql1 et sql2) 
+Une requête avec LEFT JOIN et une requête avec RIGHT JOIN 
+Une requête avec chacune des 6 fonctions d’agrégations vues dans le cours 
+Ces requêtes doivent être utilisées dans l’application et renseignées dans le fichier récapitulatif. 
+Livrables : - - - - - 
+Le diagramme E/A de votre base de données 
+Une note explicative sur une page de vos choix techniques, du fonctionnement de votre 
+application, la composition du groupe etc. 
+Les scripts de création de la BDD, de la création de vos utilisateurs (pensez à personnaliser les 
+noms des utilisateurs) et du peuplement en fichier SQL 
+Le projet C# 
+Un fichier SQL avec un récapitulatif de toutes les requêtes utilisées dans votre application. 
+L’ensemble est à rendre dans un fichier .ZIP pour le 20/12/2025 à 23h00
