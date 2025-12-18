@@ -89,7 +89,6 @@ id : admin_assistant | mdp : '1234'
                 AfficherMessage("Erreur lors de l'inscription (Email peut-être déjà pris).", ConsoleColor.Red);
             }
         }
-
         static void GestionConnexionMembre()
         {
             Console.Clear();
@@ -109,7 +108,6 @@ id : admin_assistant | mdp : '1234'
                 AfficherMessage("Email ou mot de passe incorrect.", ConsoleColor.Red);
             }
         }
-
         static void MenuEspaceMembre(Membre membre)
         {
             bool retour = false;
@@ -119,14 +117,16 @@ id : admin_assistant | mdp : '1234'
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine($"--- ESPACE DE {membre.Prenom.ToUpper()} (Statut: {membre.Statut}) ---");
                 Console.ResetColor();
-                Console.WriteLine("1. Consulter les cours disponibles");
+                Console.WriteLine("1. Consulter le planning des cours");
                 Console.WriteLine("2. Réserver un cours");
-                Console.WriteLine("3. Mes Réservations (Historique)");
-                Console.WriteLine("4. Mes Informations Personnelles");
-                Console.WriteLine("5. Se déconnecter");
+                Console.WriteLine("3. Annuler une réservation"); // AJOUTÉ
+                Console.WriteLine("4. Mes Réservations (Historique)");
+                Console.WriteLine("5. Mes Informations");
+                Console.WriteLine("6. Déconnexion");
                 Console.Write("Choix : ");
 
-                switch (Console.ReadLine())
+                string choix = Console.ReadLine();
+                switch (choix)
                 {
                     case "1":
                         AfficherTousLesCours();
@@ -135,19 +135,21 @@ id : admin_assistant | mdp : '1234'
                         ProcessusReservation(membre);
                         break;
                     case "3":
-                        AfficherHistorique(membre);
+                        ProcessusAnnulation(membre); // AJOUTÉ
                         break;
                     case "4":
-                        Console.WriteLine($"\nNom: {membre.Nom} {membre.Prenom}\nEmail: {membre.Mail}\nTel: {membre.Tel}\nAdresse: {membre.Adresse}");
-                        Console.ReadKey();
+                        AfficherHistorique(membre);
                         break;
                     case "5":
+                        Console.WriteLine($"\nNom: {membre.Nom}\nEmail: {membre.Mail}\nDate inscription: {membre.DateInscription}");
+                        Console.ReadKey();
+                        break;
+                    case "6":
                         retour = true;
                         break;
                 }
             }
         }
-
         static void AfficherTousLesCours()
         {
             Console.Clear();
@@ -160,7 +162,6 @@ id : admin_assistant | mdp : '1234'
             Console.WriteLine("\nAppuyez sur une touche pour revenir...");
             Console.ReadKey();
         }
-
         static void ProcessusReservation(Membre membre)
         {
             // Vérifier statut
@@ -184,7 +185,6 @@ id : admin_assistant | mdp : '1234'
                 }
             }
         }
-
         static void AfficherHistorique(Membre membre)
         {
             Console.Clear();
@@ -405,7 +405,6 @@ id : admin_assistant | mdp : '1234'
 
         #endregion
 
-        // Nouvelle fonction pour gérer les coachs
         static void SousMenuCoachs()
         {
             Console.Clear();
@@ -431,13 +430,41 @@ id : admin_assistant | mdp : '1234'
                 Console.ReadKey();
             }
         }
-        // Méthode utilitaire pour afficher des messages colorés
         static void AfficherMessage(string message, ConsoleColor couleur)
         {
             Console.ForegroundColor = couleur;
             Console.WriteLine("\n" + message);
             Console.ResetColor();
             System.Threading.Thread.Sleep(1500); // Pause pour lire
+        }
+        static void ProcessusAnnulation(Membre membre)
+        {
+            Console.Clear();
+            Console.WriteLine("--- ANNULATION ---");
+            // On affiche d'abord l'historique pour aider l'utilisateur
+            List<Reservation> resas = Reservation.GetHistorique(membre.IdMembre);
+            if (resas.Count == 0)
+            {
+                AfficherMessage("Vous n'avez aucune réservation à annuler.", ConsoleColor.Yellow);
+                return;
+            }
+
+            foreach (var r in resas)
+            {
+                // Note: Il faudrait idéalement stocker l'ID du cours dans l'objet Reservation pour faciliter la saisie
+                Console.WriteLine(r.ToString());
+            }
+
+            Console.WriteLine("\n(Pour annuler, vous aurez besoin de l'ID du cours. Consultez le planning si besoin)");
+            Console.Write("Entrez l'ID du cours à annuler : ");
+
+            if (int.TryParse(Console.ReadLine(), out int idCours))
+            {
+                if (membre.AnnulerReservation(idCours))
+                {
+                    AfficherMessage("C'est noté, votre place est libérée.", ConsoleColor.Green);
+                }
+            }
         }
     }
 }

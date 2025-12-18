@@ -67,7 +67,6 @@ namespace A2_Projet_CBDD
             return null; // Échec connexion
         }
 
-        // Méthode pour s'inscrire dans la BDD
         public bool Inscrire(string motDePasse)
         {
             using (MySqlConnection conn = Connexion.GetConnexionPublic())
@@ -102,7 +101,6 @@ namespace A2_Projet_CBDD
                 }
             }
         }
-
         public bool ReserverCours(int idCours)
         {
             if (this.Statut != "Valide")
@@ -110,30 +108,99 @@ namespace A2_Projet_CBDD
                 Console.WriteLine("Votre compte doit être validé par un administrateur pour réserver.");
                 return false;
             }
+
             using (MySqlConnection conn = Connexion.GetConnexionPublic())
             {
                 if (conn == null) return false;
+
                 try
                 {
-                    // Générer un ID Reservation aléatoire (car pas auto_increment)
-                    int idResa = new Random().Next(1000, 99999);
+                    // ÉTAPE 1 : Vérifier la capacité restante
+                    // On récupère la capacité max du cours ET le nombre d'inscrits actuel
+                    string queryCheck = @"SELECT 
+                                            (SELECT Capacite_Max FROM Cours WHERE Id_Cours = @id) as Max,
+                                            (SELECT COUNT(*) FROM Reservation WHERE Id_Cours = @id) as Inscrits";
 
-                    string query = "INSERT INTO Reservation (Id_Reservation, idMembre, Id_Cours, Date_Reservation, Statut_Reservation) " +
-                                   "VALUES (@idResa, @idMembre, @idCours, @date, 'Confirme')";
+                    MySqlCommand cmdCheck = new MySqlCommand(queryCheck, conn);
+                    cmdCheck.Parameters.AddWithValue("@id", idCours);
 
-                    MySqlCommand cmd = new MySqlCommand(query, conn);
-                    cmd.Parameters.AddWithValue("@idResa", idResa);
-                    cmd.Parameters.AddWithValue("@idMembre", this.IdMembre);
-                    cmd.Parameters.AddWithValue("@idCours", idCours);
-                    cmd.Parameters.AddWithValue("@date", DateTime.Now);
+                    using (MySqlDataReader reader = cmdCheck.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            // Gestion du cas où le cours n'existe pas (Max est NULL)
+                            if (reader.IsDBNull(0))
+                            {
+                                Console.WriteLine("Ce cours n'existe pas.");
+                                return false;
+                            }
 
-                    cmd.ExecuteNonQuery();
-                    Console.WriteLine("Réservation confirmée !");
+                            int max = reader.GetInt32("Max");
+                            int inscrits = reader.GetInt32("Inscrits");
+
+                            // CONTRAINTE RESPECTÉE : Si c'est plein, on bloque
+                            if (inscrits >= max)
+                            {
+                                Console.ForegroundColor = ConsoleColor.Red;
+                                Console.WriteLine($"\nERREUR : Ce cours est complet ({inscrits}/{max} places).");
+                                Console.ResetColor();
+                                return false;
+                            }
+                        }
+                    } // Le reader est fermé ici, on peut faire une nouvelle requête
+
+                    // ÉTAPE 2 : Procéder à la réservation
+                    int idResa = new Random().Next(10000, 99999);
+                    string queryInsert = "INSERT INTO Reservation (Id_Reservation, idMembre, Id_Cours, Date_Reservation, Statut_Reservation) " +
+                                         "VALUES (@idResa, @idMembre, @idCours, @date, 'Confirme')";
+
+                    MySqlCommand cmdInsert = new MySqlCommand(queryInsert, conn);
+                    cmdInsert.Parameters.AddWithValue("@idResa", idResa);
+                    cmdInsert.Parameters.AddWithValue("@idMembre", this.IdMembre);
+                    cmdInsert.Parameters.AddWithValue("@idCours", idCours);
+                    cmdInsert.Parameters.AddWithValue("@date", DateTime.Now);
+
+                    cmdInsert.ExecuteNonQuery();
                     return true;
+                }
+                catch (MySqlException ex)
+                {
+                    // Gestion du doublon (si le membre est déjà inscrit à ce cours)
+                    if (ex.Number == 1062) Console.WriteLine("Vous avez déjà réservé ce cours !");
+                    else Console.WriteLine("Erreur technique : " + ex.Message);
+
+                    return false;
+                }
+            }
+        }
+        public bool AnnulerReservation(int idCours)
+        {
+            using (MySqlConnection conn = Connexion.GetConnexionPublic())
+            {
+                if (conn == null) return false;
+
+                try
+                {
+                    string query = "DELETE FROM Reservation WHERE idMembre = @idM AND Id_Cours = @idC";
+                    MySqlCommand cmd = new MySqlCommand(query, conn);
+                    cmd.Parameters.AddWithValue("@idM", this.IdMembre);
+                    cmd.Parameters.AddWithValue("@idC", idCours);
+
+                    int rows = cmd.ExecuteNonQuery();
+                    if (rows > 0)
+                    {
+                        Console.WriteLine("Réservation annulée avec succès.");
+                        return true;
+                    }
+                    else
+                    {
+                        Console.WriteLine("Aucune réservation trouvée pour ce cours.");
+                        return false;
+                    }
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine("Erreur réservation : " + ex.Message);
+                    Console.WriteLine("Erreur annulation : " + ex.Message);
                     return false;
                 }
             }
