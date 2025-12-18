@@ -94,6 +94,7 @@
   <ItemGroup>
     <Compile Include="Administrateur.cs" />
     <Compile Include="Coach.cs" />
+    <Compile Include="Connexion.cs" />
     <Compile Include="Cours.cs" />
     <Compile Include="Inscription.cs" />
     <Compile Include="Membre.cs" />

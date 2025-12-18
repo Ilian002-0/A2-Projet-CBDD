@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -17,11 +18,25 @@ namespace A2_Projet_CBDD
         private string mail;
         private DateTime Date_Inscription;
         private string MotDePasse;
+        private List<int> ID_existant= new List<int>();
+        private MySqlConnection maConnexion = null;
 
-        public Membre(int idMembre, string nom, string prenom, string adresse, string tel, string mail, string motDePasse)
+        public Membre(int ID, MySqlConnection maConnexion)
+        {
+            this.idMembre = ID;
+            this.nom = nom;
+            this.prenom = prenom;
+            this.adresse = adresse;
+            this.tel = tel;
+            this.mail = mail;
+            Date_Inscription = date;
+            MotDePasse = motDePasse;
+            ID_existant = Get_ID_existant();
+            this.maConnexion = maConnexion;
+        }
+        public Membre(string nom, string prenom, string adresse, string tel, string mail, string motDePasse, MySqlConnection maConnexion)
         {
             DateTime date_now = DateTime.Now;
-            this.idMembre = idMembre;
             this.nom = nom;
             this.prenom = prenom;
             this.adresse = adresse;
@@ -29,6 +44,8 @@ namespace A2_Projet_CBDD
             this.mail = mail;
             Date_Inscription = date_now;
             MotDePasse = motDePasse;
+            ID_existant = Get_ID_existant();
+            this.maConnexion = maConnexion;
         }
 
         public int IdMembre { get => idMembre; set => idMembre = value; }
@@ -39,5 +56,70 @@ namespace A2_Projet_CBDD
         public string Mail { get => mail; set => mail = value; }
         public DateTime DateInscription { get => Date_Inscription; set => Date_Inscription = value; }
         public string Get_MotDePasse { get => MotDePasse; set => MotDePasse = value; }
+
+        private List<int> Get_ID_existant()
+        {
+            string requete = "SELECT idMembre FROM Membre;";
+            MySqlCommand command2 = maConnexion.CreateCommand();
+            command2.CommandText = requete;
+
+            List<int> res = new List<int>();
+            MySqlDataReader reader = command2.ExecuteReader();
+
+            while (reader.Read())
+            {
+                for (int i = 0; i < reader.FieldCount; i++)
+                {
+                    res.Add(reader.GetInt32(i));
+                }
+            }
+            reader.Close();
+            command2.Dispose();
+            return res;
+        }
+        public int Generer_ID()
+        {
+            Random rnd = new Random();
+            int new_ID = rnd.Next(1, 1000);
+            while (ID_existant.Contains(new_ID))
+            {
+                new_ID = rnd.Next(1, 1000);
+            }
+            ID_existant.Add(new_ID);
+            return new_ID;
+        }
+        public string Get_Nom(int ID, MySqlConnection maConnexion)
+        {
+            string requete = "SELECT Nom FROM Membre WHERE idMembre=@ID;";
+            MySqlCommand command2 = maConnexion.CreateCommand();
+            command2.CommandText = requete;
+            command2.Parameters.AddWithValue("@ID", ID);
+            string res = "";
+            MySqlDataReader reader = command2.ExecuteReader();
+            while (reader.Read())
+            {
+                res = reader.GetString(0);
+            }
+            reader.Close();
+            command2.Dispose();
+            return res;
+        }
+        public string Get_Prenom(int ID, MySqlConnection maConnexion)
+        {
+            string requete = "SELECT Prenom FROM Membre WHERE idMembre=@ID;";
+            MySqlCommand command2 = maConnexion.CreateCommand();
+            command2.CommandText = requete;
+            command2.Parameters.AddWithValue("@ID", ID);
+            string res = "";
+            MySqlDataReader reader = command2.ExecuteReader();
+            while (reader.Read())
+            {
+                res = reader.GetString(0);
+            }
+            reader.Close();
+            command2.Dispose();
+            return res;
+        }
+        
     }
 }
