@@ -66,7 +66,6 @@ namespace A2_Projet_CBDD
             return null; // Retourne null si échec ou erreur, le programme continue
         }
 
-        // Action : Valider l'inscription d'un membre
         public bool ValiderInscription(int idMembre)
         {
             using (MySqlConnection conn = Connexion.GetConnexionAdmin()) // Requiert privilèges Admin
@@ -88,7 +87,6 @@ namespace A2_Projet_CBDD
             }
         }
 
-        // Action : Supprimer un membre (et ses réservations associées)
         public bool SupprimerMembre(int idMembre)
         {
             using (MySqlConnection conn = Connexion.GetConnexionAdmin())
@@ -126,37 +124,84 @@ namespace A2_Projet_CBDD
 
                 Console.WriteLine("\n--- RAPPORT STATISTIQUE (Requis par le cahier des charges) ---");
 
-                // 1. Moyenne durée des cours (Agrégation)
                 AfficherRequete(conn, "Durée moyenne des cours", "SELECT AVG(Duree_Minutes) FROM Cours");
 
-                // 2. Nombre total de membres (Agrégation)
                 AfficherRequete(conn, "Nombre total de membres", "SELECT COUNT(*) FROM Membre");
-
-                // 3. Cours plus longs que la moyenne (Sous-requête)
                 Console.WriteLine("\n[Cours > Durée Moyenne]");
                 AfficherListe(conn, "SELECT Nom_Cours FROM Cours WHERE Duree_Minutes > (SELECT AVG(Duree_Minutes) FROM Cours)");
-
-                // 4. Membres intéressés par le Yoga (Sous-requête imbriquée)
                 Console.WriteLine("\n[Membres ayant réservé du Yoga]");
                 string sqlYoga = "SELECT Nom FROM Membre WHERE idMembre IN (SELECT idMembre FROM Reservation WHERE Id_Cours IN (SELECT Id_Cours FROM Cours WHERE Nom_Cours LIKE '%Yoga%'))";
                 AfficherListe(conn, sqlYoga);
             }
         }
-
-        // Helpers pour l'affichage rapide
         private void AfficherRequete(MySqlConnection conn, string titre, string requet)
         {
             MySqlCommand cmd = new MySqlCommand(requet, conn);
             object result = cmd.ExecuteScalar();
             Console.WriteLine($"{titre} : {result}");
         }
-
         private void AfficherListe(MySqlConnection conn, string requet)
         {
             MySqlCommand cmd = new MySqlCommand(requet, conn);
             using (MySqlDataReader reader = cmd.ExecuteReader())
             {
                 while (reader.Read()) Console.WriteLine($"- {reader[0]}");
+            }
+        }
+        // --- NOUVELLE MÉTHODE POUR LES JOINTURES (LEFT & RIGHT) ---
+        public void AfficherJointuresSpeciales()
+        {
+            using (MySqlConnection conn = Connexion.GetConnexionAdmin())
+            {
+                if (conn == null) return;
+
+                Console.WriteLine("\n--- ANALYSE TECHNIQUE (JOIN) ---");
+
+                // 1. REQUÊTE LEFT JOIN
+                // Objectif : Afficher TOUS les coachs, y compris ceux qui n'ont pas de cours assigné.
+                Console.WriteLine("\n[1] Disponibilité des Coachs (LEFT JOIN)");
+                Console.WriteLine($"{"COACH",-20} | {"COURS ASSIGNÉ",-20}");
+                Console.WriteLine(new string('-', 45));
+
+                string queryLeft = "SELECT c.Nom, c.Prenom, cr.Nom_Cours " +
+                                   "FROM Coach c " +
+                                   "LEFT JOIN Cours cr ON c.Id_Coach = cr.Id_Coach";
+
+                MySqlCommand cmdLeft = new MySqlCommand(queryLeft, conn);
+                using (MySqlDataReader reader = cmdLeft.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        string nomCoach = $"{reader.GetString("Nom")} {reader.GetString("Prenom")}";
+                        // Si la colonne de droite (Cours) est NULL, c'est que le coach n'a pas de cours
+                        string cours = reader.IsDBNull(reader.GetOrdinal("Nom_Cours")) ? ">> AUCUN COURS <<" : reader.GetString("Nom_Cours");
+
+                        Console.WriteLine($"{nomCoach,-20} | {cours,-20}");
+                    }
+                }
+
+                // 2. REQUÊTE RIGHT JOIN
+                // Objectif : Afficher TOUTES les salles, y compris celles qui n'ont aucun cours programmé.
+                Console.WriteLine("\n[2] Occupation des Salles (RIGHT JOIN)");
+                Console.WriteLine($"{"SALLE",-20} | {"COURS PRÉVU",-20}");
+                Console.WriteLine(new string('-', 45));
+
+                string queryRight = "SELECT cr.Nom_Cours, s.Nom_Salle " +
+                                    "FROM Cours cr " +
+                                    "RIGHT JOIN Salle s ON cr.Id_Salle = s.Id_Salle";
+
+                MySqlCommand cmdRight = new MySqlCommand(queryRight, conn);
+                using (MySqlDataReader reader = cmdRight.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        string salle = reader.GetString("Nom_Salle");
+                        // Si la colonne de gauche (Cours) est NULL, c'est que la salle est vide
+                        string cours = reader.IsDBNull(reader.GetOrdinal("Nom_Cours")) ? ">> SALLE VIDE <<" : reader.GetString("Nom_Cours");
+
+                        Console.WriteLine($"{salle,-20} | {cours,-20}");
+                    }
+                }
             }
         }
     }

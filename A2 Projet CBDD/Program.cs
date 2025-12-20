@@ -253,7 +253,7 @@ id : admin_assistant | mdp : '1234'
                     // ... le reste ne change pas ...
                     case "3": AjouterSalleUI(); break;
                     case "4": AjouterCoursUI(); break;
-                    case "5": admin.AfficherRapportStatistique(); Console.ReadKey(); break;
+                    case "5": admin.AfficherRapportStatistique(); admin.AfficherJointuresSpeciales(); Console.ReadKey(); break;
                     case "6": retour = true; break;
                 }
             }
@@ -346,7 +346,6 @@ id : admin_assistant | mdp : '1234'
                 }
             }
         }
-
         static void AjouterCoachUI()
         {
             Console.WriteLine("\n--- AJOUT COACH ---");
@@ -358,7 +357,6 @@ id : admin_assistant | mdp : '1234'
             Coach c = new Coach(n, p, s, t);
             if (c.Ajouter()) AfficherMessage("Coach ajouté !", ConsoleColor.Green);
         }
-
         static void AjouterSalleUI()
         {
             Console.WriteLine("\n--- AJOUT SALLE ---");
@@ -369,7 +367,6 @@ id : admin_assistant | mdp : '1234'
             Salle s = new Salle(n, cap);
             if (s.Ajouter()) AfficherMessage("Salle ajoutée !", ConsoleColor.Green);
         }
-
         static void AjouterCoursUI()
         {
             Console.Clear();
@@ -402,9 +399,7 @@ id : admin_assistant | mdp : '1234'
                 AfficherMessage("Erreur lors de la création.", ConsoleColor.Red);
             }
         }
-
         #endregion
-
         static void SousMenuCoachs()
         {
             Console.Clear();
